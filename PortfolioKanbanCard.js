@@ -12,8 +12,7 @@ Ext.define('Rally.app.portfolioitem.PortfolioKanbanCard', {
                 'Owner',
                 'FormattedID',
                 'Name',
-                'StateChangedDate',
-                'State'
+                'StateChangedDate'
             ];
         }
 

@@ -27,13 +27,9 @@ Ext.define('FeaturesInProgress.PortfolioKanban', {
                         value: "Portfolio Item"
                     }
                 ],
-//                sorters: {
-//                    property: 'ordinalValue',
-//                    direction: 'Asc'
-//                },
                 listeners: {
                     load: function(store, records){
-                        this._loadCardboard(records[0].get('_ref'));
+                        this._loadCardboard(records[0]);
                     },
                     scope: this
                 }
@@ -70,7 +66,7 @@ Ext.define('FeaturesInProgress.PortfolioKanban', {
                 filters: [
                     {
                         property: 'TypeDef',
-                        value: this.type
+                        value: this.type.get('_ref')
                     },
                     {
                         property: 'Enabled',
@@ -114,7 +110,7 @@ Ext.define('FeaturesInProgress.PortfolioKanban', {
                 };
 
                 cardboard = Ext.widget('rallycardboard', {
-                    types: ['PortfolioItem/Feature'],
+                    types: [this.type.get('TypePath')],
                     itemId: 'cardboard',
                     attribute: 'State',
                     columns: columns,
@@ -126,7 +122,7 @@ Ext.define('FeaturesInProgress.PortfolioKanban', {
                         filters:[
                             {
                                 property:'PortfolioItemType',
-                                value:this.type
+                                value:this.type.get('_ref')
                             }
                         ],
                         context: this.context.getDataContext()

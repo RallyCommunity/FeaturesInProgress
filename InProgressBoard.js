@@ -3,7 +3,8 @@ Ext.define('FeaturesInProgress.InProgressBoard', {
     
     config: {
         context: undefined,
-        selectedProject: undefined
+        selectedProject: undefined,
+        hierarchyScope: false
     },
     
     constructor: function(config){
@@ -14,16 +15,6 @@ Ext.define('FeaturesInProgress.InProgressBoard', {
     initComponent: function(){
         this.callParent(arguments);
         
-        this.add({
-            xtype: 'component',
-            autoEl: 'h1',
-            html: 'In Progress Features'
-        });
-        this.add({
-            xtype: 'component',
-            cls: 'grayLabel',
-            html: 'The in progress Features shown have child User Stories assigned to the selected Project on the left.'
-        });
         this.add({
             xtype: 'container',
             itemId: 'boardContainer'
@@ -51,6 +42,8 @@ Ext.define('FeaturesInProgress.InProgressBoard', {
                 html: 'No project selected'
             });
             return;
+        } else {
+            container.setLoading(true);
         }
         
         this.findFeaturesForProject(this.getSelectedProject(), function(featureRefs){
@@ -64,6 +57,7 @@ Ext.define('FeaturesInProgress.InProgressBoard', {
                         features: features
                     });
                     container.add(cardboard);
+                    container.setLoading(false);
                 },
                 scope: this
             });
@@ -73,18 +67,30 @@ Ext.define('FeaturesInProgress.InProgressBoard', {
     },
     
     findFeaturesForProject: function(project, callback, scope){
+
+        var storyFilter;
+        if(this.getHierarchyScope()) {
+
+            storyFilter = Ext.create('Rally.data.QueryFilter', {
+                property: 'Parent',
+                operator: '!=',
+                value: 'null'
+            });
+            
+            storyFilter = storyFilter.or({
+                property: 'PortfolioItem',
+                operator: '!=',
+                value: 'null'
+            });
+        } else {
+            storyFilter = Ext.create('Rally.data.QueryFilter', {
+                property: 'PortfolioItem',
+                operator: '!=',
+                value: 'null'
+            });
+        }
         
-        var storyFilter = Ext.create('Rally.data.QueryFilter', {
-            property: 'Parent',
-            operator: '!=',
-            value: 'null'
-        });
-        
-        storyFilter = storyFilter.or({
-            property: 'PortfolioItem',
-            operator: '!=',
-            value: 'null'
-        });
+
         
         storyFilter = storyFilter.and({
             property: 'ScheduleState',
@@ -190,6 +196,11 @@ Ext.define('FeaturesInProgress.InProgressBoard', {
     
     updateWithProject: function(record){
         this.setSelectedProject(record);
+        this.buildBoard();
+    },
+
+    updateWithHierarchyScope: function(value) {
+        this.setHierarchyScope(value);
         this.buildBoard();
     }
 });

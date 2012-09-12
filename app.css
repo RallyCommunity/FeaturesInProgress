@@ -20,7 +20,12 @@ body {
     background: #D0F1D9;
 }
 
+.titleText {
+    text-align: center;
+}
+
 .grayLabel {
+    text-align: center;
     color: #888;
     margin: 5px 15px;
 }
@@ -31,10 +36,10 @@ h1 {
 }
 
 .noProjectSelected {
-    margin: 40px 0 0 0;
+    margin: 0 auto;
     width: 200px;
     padding: 20px;
-    border: 1px solid #EEE;
-    color: #888;
+    border: 1px solid #AAA;
+    color: #333;
     text-align: center;
 }
