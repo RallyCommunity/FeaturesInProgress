@@ -115,7 +115,6 @@ Ext.define('FeaturesInProgress.PortfolioKanban', {
                     attribute: 'State',
                     columns: columns,
                     maxColumnsPerBoard: columns.length,
-                    enableRanking: false,
                     columnConfig: columnConfig,
                     cardConfig: cardConfig,
                     storeConfig:{

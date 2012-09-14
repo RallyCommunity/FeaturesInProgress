@@ -3,52 +3,67 @@ Ext.define('FeaturesInProgress', {
     componentCls: 'app',
 
     launch: function() {
+
+        this.buildTitle();
+        this.buildCapabilityGroupDropdown();
+        this.buildLoadButton();
+        this.buildKanbanBoard();
+    },
+
+    buildTitle: function() {
         this.add({
             xtype: 'component',
             autoEl: 'h1',
             cls: 'titleText',
+            itemId: 'titleText',
             html: 'In Progress Features'
         });
+
         this.add({
             xtype: 'component',
             cls: 'grayLabel',
-            html: 'The "In-Progress" Features shown have child User Stories assigned to the selected Project'
-        }); 
-        this.buildProjectPicker();
-        this.buildCheckbox();
-        this.buildKanbanBoard();
+            html: 'The "In-Progress" Portfolio Items shown have child User Stories assigned to the selected Capability Group'
+        });
+
+        this.add({
+            xtype: 'component',
+            itemId: 'loadingText',
+            cls: 'loadingText',
+            html: ''
+        });
     },
 
-    buildCheckbox: function() {
-        var checkbox = Ext.widget('checkbox', {
-            labelSeparator: '',
-            hideLabel: true,
-            boxLabel: 'Search the entire user story hierarchy instead of user stories just below a portfolio item (much slower)'
-        });
-        checkbox.on('change', this.checkboxSelected, this);
-        this.add(checkbox);
-    },
-    
-    buildProjectPicker: function(){
-        var picker = Ext.widget('rallyprojectpicker', {
-            fieldLabel: 'Select a project:'
-        });
-        picker.on('change', this.projectSelected, this);
-        this.add(picker);
-    },
-    
-    projectSelected: function(field, value){
-        this.board.updateWithProject(value);
+    buildCapabilityGroupDropdown: function() {
+        var combo = Ext.create('CapabilityGroupCombobox');
+        combo.on('ready', this.selectCapabilityGroup, this);
+        combo.on('change', this.selectCapabilityGroup, this);
+        this.add(combo);
     },
 
-    checkboxSelected: function(field, value) {
-        this.board.updateWithHierarchyScope(value);
+    selectCapabilityGroup: function(combobox) {
+        this.board.updateCapabilityGroup(combobox.getValue());
+    },
+
+    buildLoadButton: function() {
+        this.loadButton = this.add({
+            xtype: 'rallybutton',
+            cls: 'loadButton',
+            text: 'Load',
+            handler: function() {
+                this.loadButton.disable();
+                this.board.buildBoard();
+            },
+            scope: this
+        });
     },
     
     buildKanbanBoard: function(){
         var board = this.board = Ext.create('FeaturesInProgress.InProgressBoard', {
             context: this.getContext()
         });
+        this.board.on('doneLoading', function(){
+            this.loadButton.enable();
+        }, this);
         this.add(board);
     }
 });

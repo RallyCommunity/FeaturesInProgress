@@ -7,7 +7,32 @@
 
     <script type="text/javascript">
         Rally.onReady(function() {
-            Ext.define('FeaturesInProgress.ProjectTree', {
+            Ext.define('CapabilityGroupCombobox', {
+            	extend: 'Rally.ui.combobox.ComboBox',
+            
+                constructor: function(config) {
+                    var defaultConfig = {
+                        stateful: false,
+                        fieldLabel: 'Capability Group',
+                        labelWidth: 95,
+                        labelClsExtra: 'rui-label',
+                        storeConfig: {
+                            autoLoad: true,
+                            model: 'Project',
+                            filters: [
+                                {
+                                    property: 'Name',
+                                    operator: 'Contains',
+                                    value: 'MVF Backlog'
+                                }
+                            ]
+                        }
+                    };
+            
+                    this.callParent([Ext.Object.merge(defaultConfig, config)]);
+                }
+            
+            });            Ext.define('FeaturesInProgress.ProjectTree', {
                 extend: 'Ext.Container',
                 
                 initComponent: function(){
@@ -90,6 +115,7 @@
                 alias: 'widget.inmemorycolumn',
                 
                 config: {
+                    enableRanking: false,
                 	/**
                 	 * @cfg {Array}
                 	 */
@@ -117,8 +143,7 @@
                             'Owner',
                             'FormattedID',
                             'Name',
-                            'StateChangedDate',
-                            'State'
+                            'StateChangedDate'
                         ];
                     }
             
@@ -166,13 +191,9 @@
                                     value: "Portfolio Item"
                                 }
                             ],
-            //                sorters: {
-            //                    property: 'ordinalValue',
-            //                    direction: 'Asc'
-            //                },
                             listeners: {
                                 load: function(store, records){
-                                    this._loadCardboard(records[0].get('_ref'));
+                                    this._loadCardboard(records[0]);
                                 },
                                 scope: this
                             }
@@ -209,7 +230,7 @@
                             filters: [
                                 {
                                     property: 'TypeDef',
-                                    value: this.type
+                                    value: this.type.get('_ref')
                                 },
                                 {
                                     property: 'Enabled',
@@ -253,19 +274,18 @@
                             };
             
                             cardboard = Ext.widget('rallycardboard', {
-                                types: ['PortfolioItem/Feature'],
+                                types: [this.type.get('TypePath')],
                                 itemId: 'cardboard',
                                 attribute: 'State',
                                 columns: columns,
                                 maxColumnsPerBoard: columns.length,
-                                enableRanking: false,
                                 columnConfig: columnConfig,
                                 cardConfig: cardConfig,
                                 storeConfig:{
                                     filters:[
                                         {
                                             property:'PortfolioItemType',
-                                            value:this.type
+                                            value:this.type.get('_ref')
                                         }
                                     ],
                                     context: this.context.getDataContext()
@@ -355,27 +375,41 @@
                     this.callParent(arguments);
                     
                     this.add({
-                        xtype: 'component',
-                        autoEl: 'h1',
-                        html: 'In Progress Features'
-                    });
-                    this.add({
-                        xtype: 'component',
-                        cls: 'grayLabel',
-                        html: 'The in progress Features shown have child User Stories assigned to the selected Project on the left.'
-                    });
-                    this.add({
                         xtype: 'container',
-                        itemId: 'boardContainer'
+                        itemId: 'boardContainer',
+                        items: {
+                            xtype: 'component',
+                            cls: 'noProjectSelected',
+                            html: 'Choose a capability group to see portfolio items in progress'
+                        }
                     });
                     
-                    Rally.data.ModelFactory.getModel({
-                        type: 'PortfolioItem/Feature',
-                        success: function(model){
-                            this.portfolioItemModel = model;
-                            this.buildBoard();
-                        },
-                        scope: this
+                    Ext.create('Rally.data.WsapiDataStore', {
+                        autoLoad: true,
+                        model: 'TypeDefinition',
+                        filters: [
+                            {
+                                property: 'Parent.Name',
+                                value: 'Portfolio Item'
+                            },
+                            {
+                                property: 'Ordinal',
+                                value: 0
+                            }
+                        ],
+                        listeners: {
+                            load: function(store, records){
+                                Rally.data.ModelFactory.getModel({
+                                    type: records[0].get('TypePath'),
+                                    success: function(model){
+                                        this.portfolioItemModel = model;
+                                        this.setTitleText('In Progress ' + this.portfolioItemModel.elementName + 's');
+                                    },
+                                    scope: this
+                                });
+                            },
+                            scope: this
+                        }
                     });
                 },
                 
@@ -384,15 +418,8 @@
                     var container = this.down('#boardContainer');
                     container.removeAll();
                     
-                    if(!this.getSelectedProject()){
-                        container.add({
-                            xtype: 'component',
-                            cls: 'noProjectSelected',
-                            html: 'No project selected'
-                        });
-                        return;
-                    }
-                    
+                    container.setLoading(true);
+            
                     this.findFeaturesForProject(this.getSelectedProject(), function(featureRefs){
                         featureRefs = Ext.Array.unique(featureRefs);
                         
@@ -404,6 +431,8 @@
                                     features: features
                                 });
                                 container.add(cardboard);
+                                container.setLoading(false);
+                                this.fireEvent('doneLoading');
                             },
                             scope: this
                         });
@@ -413,7 +442,7 @@
                 },
                 
                 findFeaturesForProject: function(project, callback, scope){
-                    
+            
                     var storyFilter = Ext.create('Rally.data.QueryFilter', {
                         property: 'Parent',
                         operator: '!=',
@@ -432,20 +461,32 @@
                     });
                     
                     var store = Ext.create('Rally.data.WsapiDataStore', {
-                        pageSize: 200,
+                        limit: Infinity,
                         model: 'User Story',
+                        fetch: ['Parent','PortfolioItem'],
                         filters: storyFilter,
                         context: {
                             project: project,
                             projectScopeDown: true
                         }
                     });
+            
+                    this.updateLoadingText('Finding user stories (may take a while...)');
                     
                     store.load({
-                        callback: function(records){
-                            this.findFeaturesForUserStories(records, [], function(featureRefs){
-                                callback.call(scope, featureRefs);
-                            }, this);
+                        callback: function(store){
+                            if(store) {
+                                this.numRecordsFound = store.count();
+            
+                                this.updateLoadingText('Finished 0/' + this.numRecordsFound);
+            
+                                this.findFeaturesForUserStories(store, [], function(featureRefs){
+                                    callback.call(scope, featureRefs);
+                                }, this);    
+                            } else {
+                                this.down('#boardContainer').setLoading(false);
+                            }
+                            
                         },
                         scope: this
                     });
@@ -456,21 +497,25 @@
                  * Given a list of stories, finds the collection of feature refs that they belong to.
                  * Calls callback with feature refs.
                  */
-                findFeaturesForUserStories: function(stories, features, callback, scope){
+                findFeaturesForUserStories: function(store, features, callback, scope){
                     features = features || [];
                     
-                    if(stories.length === 0){
+                    if(store.count() === 0){
+                        this.updateLoadingText('');
                         callback.call(scope, features);
                         return;
                     }
                     
-                    var story = stories.shift();
+                    this.updateLoadingText('Finished ' + (this.numRecordsFound - store.count()) + '/' + this.numRecordsFound);
+            
+                    var story = store.first();
                     this.findFeatureForUserStory(story, function(feature){
                         if(feature){
                             features.push(feature);
                         }
                         
-                        this.findFeaturesForUserStories(stories, features, callback, scope);
+                        store.remove(story);
+                        this.findFeaturesForUserStories(store, features, callback, scope);
                     }, this);
                     
                 },
@@ -527,34 +572,90 @@
                         }
                     });
                 },
-                
-                updateWithProject: function(record){
-                    this.setSelectedProject(record);
-                    this.buildBoard();
+            
+                setTitleText: function(title) {
+                    var comp = Ext.ComponentQuery.query('#titleText');
+                    if(comp && comp[0] && comp[0].getEl()) {
+                        comp[0].getEl().setHTML(title);
+                    }
+                },
+            
+                updateLoadingText: function(message) {
+                    var comp = Ext.ComponentQuery.query('#loadingText');
+                    if(comp && comp[0] && comp[0].getEl()) {
+                        comp[0].getEl().setHTML(message);
+                    }
+                },
+            
+                updateCapabilityGroup: function(ref) {
+                    this.setSelectedProject(ref);
                 }
             });            Ext.define('FeaturesInProgress', {
                 extend: 'Rally.app.App',
                 componentCls: 'app',
             
                 launch: function() {
-                    this.buildProjectPicker();
+            
+                    this.buildTitle();
+                    this.buildCapabilityGroupDropdown();
+                    this.buildLoadButton();
                     this.buildKanbanBoard();
                 },
-                
-                buildProjectPicker: function(){
-                    var picker = Ext.widget('rallyprojectpicker');
-                    picker.on('change', this.projectSelected, this);
-                    this.add(picker);
+            
+                buildTitle: function() {
+                    this.add({
+                        xtype: 'component',
+                        autoEl: 'h1',
+                        cls: 'titleText',
+                        itemId: 'titleText',
+                        html: 'In Progress Features'
+                    });
+            
+                    this.add({
+                        xtype: 'component',
+                        cls: 'grayLabel',
+                        html: 'The "In-Progress" Portfolio Items shown have child User Stories assigned to the selected Capability Group'
+                    });
+            
+                    this.add({
+                        xtype: 'component',
+                        itemId: 'loadingText',
+                        cls: 'loadingText',
+                        html: ''
+                    });
                 },
-                
-                projectSelected: function(field, value){
-                    this.board.updateWithProject(value);
+            
+                buildCapabilityGroupDropdown: function() {
+                    var combo = Ext.create('CapabilityGroupCombobox');
+                    combo.on('ready', this.selectCapabilityGroup, this);
+                    combo.on('change', this.selectCapabilityGroup, this);
+                    this.add(combo);
+                },
+            
+                selectCapabilityGroup: function(combobox) {
+                    this.board.updateCapabilityGroup(combobox.getValue());
+                },
+            
+                buildLoadButton: function() {
+                    this.loadButton = this.add({
+                        xtype: 'rallybutton',
+                        cls: 'loadButton',
+                        text: 'Load',
+                        handler: function() {
+                            this.loadButton.disable();
+                            this.board.buildBoard();
+                        },
+                        scope: this
+                    });
                 },
                 
                 buildKanbanBoard: function(){
                     var board = this.board = Ext.create('FeaturesInProgress.InProgressBoard', {
                         context: this.getContext()
                     });
+                    this.board.on('doneLoading', function(){
+                        this.loadButton.enable();
+                    }, this);
                     this.add(board);
                 }
             });
@@ -571,26 +672,33 @@
         }
         
         .app {
-            margin: 10px 30px;
-        }
-        
-        .app > .leftSide {
-            float: left;
-            width: 25%;
-        }
-        
-        .app > .rightSide {
-            float: right;
-            width: 70%;
+            padding: 20px !important;
+            height: auto;
         }
         
         .app .treeItemSelected {
             background: #D0F1D9;
         }
         
+        .cardboard {
+            overflow: visible !important;
+        }
+        
+        .titleText {
+            text-align: center;
+        }
+        
         .grayLabel {
+            text-align: center;
             color: #888;
             margin: 5px 15px;
+        }
+        
+        .loadingText {
+            text-align: center;
+            width: 100%;
+            font-size: 15px;
+            height: 10px;
         }
         
         h1 {
@@ -599,12 +707,21 @@
         }
         
         .noProjectSelected {
-            margin: 40px 0 0 0;
+            margin: 0 auto;
             width: 200px;
             padding: 20px;
-            border: 1px solid #EEE;
-            color: #888;
+            border: 1px solid #AAA;
+            color: #333;
             text-align: center;
+        }
+        
+        .rui-triggerfield {
+            float: left;
+        }
+        
+        .loadButton {
+            float: left;
+            margin-left: 15px;
         }    </style>
 </head>
 <body></body>

@@ -3,6 +3,7 @@
     "className": "FeaturesInProgress",
     "sdk": "2.0p3",
     "javascript": [
+        "CapabilityGroupCombobox.js",
 		"ProjectTree.js",
 		"InMemoryColumn.js",
 		"PortfolioKanbanCard.js",

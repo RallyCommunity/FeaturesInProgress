@@ -3,21 +3,16 @@ body {
 }
 
 .app {
-    margin: 10px 30px;
-}
-
-.app > .leftSide {
-    float: left;
-    width: 25%;
-}
-
-.app > .rightSide {
-    float: right;
-    width: 70%;
+    padding: 20px !important;
+    height: auto;
 }
 
 .app .treeItemSelected {
     background: #D0F1D9;
+}
+
+.cardboard {
+    overflow: visible !important;
 }
 
 .titleText {
@@ -28,6 +23,13 @@ body {
     text-align: center;
     color: #888;
     margin: 5px 15px;
+}
+
+.loadingText {
+    text-align: center;
+    width: 100%;
+    font-size: 15px;
+    height: 10px;
 }
 
 h1 {
@@ -42,4 +44,13 @@ h1 {
     border: 1px solid #AAA;
     color: #333;
     text-align: center;
+}
+
+.rui-triggerfield {
+    float: left;
+}
+
+.loadButton {
+    float: left;
+    margin-left: 15px;
 }

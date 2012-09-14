@@ -3,6 +3,7 @@ Ext.define('FeaturesInProgress.InMemoryColumn', {
     alias: 'widget.inmemorycolumn',
     
     config: {
+        enableRanking: false,
     	/**
     	 * @cfg {Array}
     	 */

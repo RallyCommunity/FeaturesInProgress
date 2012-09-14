@@ -3,8 +3,7 @@ Ext.define('FeaturesInProgress.InProgressBoard', {
     
     config: {
         context: undefined,
-        selectedProject: undefined,
-        hierarchyScope: false
+        selectedProject: undefined
     },
     
     constructor: function(config){
@@ -17,16 +16,40 @@ Ext.define('FeaturesInProgress.InProgressBoard', {
         
         this.add({
             xtype: 'container',
-            itemId: 'boardContainer'
+            itemId: 'boardContainer',
+            items: {
+                xtype: 'component',
+                cls: 'noProjectSelected',
+                html: 'Choose a capability group to see portfolio items in progress'
+            }
         });
         
-        Rally.data.ModelFactory.getModel({
-            type: 'PortfolioItem/Feature',
-            success: function(model){
-                this.portfolioItemModel = model;
-                this.buildBoard();
-            },
-            scope: this
+        Ext.create('Rally.data.WsapiDataStore', {
+            autoLoad: true,
+            model: 'TypeDefinition',
+            filters: [
+                {
+                    property: 'Parent.Name',
+                    value: 'Portfolio Item'
+                },
+                {
+                    property: 'Ordinal',
+                    value: 0
+                }
+            ],
+            listeners: {
+                load: function(store, records){
+                    Rally.data.ModelFactory.getModel({
+                        type: records[0].get('TypePath'),
+                        success: function(model){
+                            this.portfolioItemModel = model;
+                            this.setTitleText('In Progress ' + this.portfolioItemModel.elementName + 's');
+                        },
+                        scope: this
+                    });
+                },
+                scope: this
+            }
         });
     },
     
@@ -35,17 +58,8 @@ Ext.define('FeaturesInProgress.InProgressBoard', {
         var container = this.down('#boardContainer');
         container.removeAll();
         
-        if(!this.getSelectedProject()){
-            container.add({
-                xtype: 'component',
-                cls: 'noProjectSelected',
-                html: 'No project selected'
-            });
-            return;
-        } else {
-            container.setLoading(true);
-        }
-        
+        container.setLoading(true);
+
         this.findFeaturesForProject(this.getSelectedProject(), function(featureRefs){
             featureRefs = Ext.Array.unique(featureRefs);
             
@@ -58,6 +72,7 @@ Ext.define('FeaturesInProgress.InProgressBoard', {
                     });
                     container.add(cardboard);
                     container.setLoading(false);
+                    this.fireEvent('doneLoading');
                 },
                 scope: this
             });
@@ -68,29 +83,17 @@ Ext.define('FeaturesInProgress.InProgressBoard', {
     
     findFeaturesForProject: function(project, callback, scope){
 
-        var storyFilter;
-        if(this.getHierarchyScope()) {
-
-            storyFilter = Ext.create('Rally.data.QueryFilter', {
-                property: 'Parent',
-                operator: '!=',
-                value: 'null'
-            });
-            
-            storyFilter = storyFilter.or({
-                property: 'PortfolioItem',
-                operator: '!=',
-                value: 'null'
-            });
-        } else {
-            storyFilter = Ext.create('Rally.data.QueryFilter', {
-                property: 'PortfolioItem',
-                operator: '!=',
-                value: 'null'
-            });
-        }
+        var storyFilter = Ext.create('Rally.data.QueryFilter', {
+            property: 'Parent',
+            operator: '!=',
+            value: 'null'
+        });
         
-
+        storyFilter = storyFilter.or({
+            property: 'PortfolioItem',
+            operator: '!=',
+            value: 'null'
+        });
         
         storyFilter = storyFilter.and({
             property: 'ScheduleState',
@@ -98,20 +101,32 @@ Ext.define('FeaturesInProgress.InProgressBoard', {
         });
         
         var store = Ext.create('Rally.data.WsapiDataStore', {
-            pageSize: 200,
+            limit: Infinity,
             model: 'User Story',
+            fetch: ['Parent','PortfolioItem'],
             filters: storyFilter,
             context: {
                 project: project,
                 projectScopeDown: true
             }
         });
+
+        this.updateLoadingText('Finding user stories (may take a while...)');
         
         store.load({
-            callback: function(records){
-                this.findFeaturesForUserStories(records, [], function(featureRefs){
-                    callback.call(scope, featureRefs);
-                }, this);
+            callback: function(store){
+                if(store) {
+                    this.numRecordsFound = store.count();
+
+                    this.updateLoadingText('Finished 0/' + this.numRecordsFound);
+
+                    this.findFeaturesForUserStories(store, [], function(featureRefs){
+                        callback.call(scope, featureRefs);
+                    }, this);    
+                } else {
+                    this.down('#boardContainer').setLoading(false);
+                }
+                
             },
             scope: this
         });
@@ -122,21 +137,25 @@ Ext.define('FeaturesInProgress.InProgressBoard', {
      * Given a list of stories, finds the collection of feature refs that they belong to.
      * Calls callback with feature refs.
      */
-    findFeaturesForUserStories: function(stories, features, callback, scope){
+    findFeaturesForUserStories: function(store, features, callback, scope){
         features = features || [];
         
-        if(stories.length === 0){
+        if(store.count() === 0){
+            this.updateLoadingText('');
             callback.call(scope, features);
             return;
         }
         
-        var story = stories.shift();
+        this.updateLoadingText('Finished ' + (this.numRecordsFound - store.count()) + '/' + this.numRecordsFound);
+
+        var story = store.first();
         this.findFeatureForUserStory(story, function(feature){
             if(feature){
                 features.push(feature);
             }
             
-            this.findFeaturesForUserStories(stories, features, callback, scope);
+            store.remove(story);
+            this.findFeaturesForUserStories(store, features, callback, scope);
         }, this);
         
     },
@@ -193,14 +212,22 @@ Ext.define('FeaturesInProgress.InProgressBoard', {
             }
         });
     },
-    
-    updateWithProject: function(record){
-        this.setSelectedProject(record);
-        this.buildBoard();
+
+    setTitleText: function(title) {
+        var comp = Ext.ComponentQuery.query('#titleText');
+        if(comp && comp[0] && comp[0].getEl()) {
+            comp[0].getEl().setHTML(title);
+        }
     },
 
-    updateWithHierarchyScope: function(value) {
-        this.setHierarchyScope(value);
-        this.buildBoard();
+    updateLoadingText: function(message) {
+        var comp = Ext.ComponentQuery.query('#loadingText');
+        if(comp && comp[0] && comp[0].getEl()) {
+            comp[0].getEl().setHTML(message);
+        }
+    },
+
+    updateCapabilityGroup: function(ref) {
+        this.setSelectedProject(ref);
     }
 });
