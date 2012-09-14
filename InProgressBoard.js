@@ -20,7 +20,7 @@ Ext.define('FeaturesInProgress.InProgressBoard', {
             items: {
                 xtype: 'component',
                 cls: 'noProjectSelected',
-                html: 'Choose a capability group to see portfolio items in progress'
+                html: 'Choose a capability group and click Load to see portfolio items in progress'
             }
         });
         
