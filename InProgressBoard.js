@@ -57,8 +57,6 @@ Ext.define('FeaturesInProgress.InProgressBoard', {
         
         var container = this.down('#boardContainer');
         container.removeAll();
-        
-        container.setLoading(true);
 
         this.findFeaturesForProject(this.getSelectedProject(), function(featureRefs){
             featureRefs = Ext.Array.unique(featureRefs);
@@ -71,7 +69,6 @@ Ext.define('FeaturesInProgress.InProgressBoard', {
                         features: features
                     });
                     container.add(cardboard);
-                    container.setLoading(false);
                     this.fireEvent('doneLoading');
                 },
                 scope: this
@@ -122,9 +119,7 @@ Ext.define('FeaturesInProgress.InProgressBoard', {
 
                     this.findFeaturesForUserStories(store, [], function(featureRefs){
                         callback.call(scope, featureRefs);
-                    }, this);    
-                } else {
-                    this.down('#boardContainer').setLoading(false);
+                    }, this);
                 }
                 
             },

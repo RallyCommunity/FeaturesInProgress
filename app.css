@@ -26,10 +26,10 @@ body {
 }
 
 .loadingText {
+    clear: both;
     text-align: center;
     width: 100%;
     font-size: 15px;
-    height: 10px;
 }
 
 h1 {

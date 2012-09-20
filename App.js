@@ -7,6 +7,7 @@ Ext.define('FeaturesInProgress', {
         this.buildTitle();
         this.buildCapabilityGroupDropdown();
         this.buildLoadButton();
+        this.buildLoadingText();
         this.buildKanbanBoard();
     },
 
@@ -24,6 +25,9 @@ Ext.define('FeaturesInProgress', {
             cls: 'grayLabel',
             html: 'The "In-Progress" Portfolio Items shown have child User Stories assigned to the selected Capability Group'
         });
+    },
+
+    buildLoadingText: function () {
 
         this.add({
             xtype: 'component',

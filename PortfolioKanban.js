@@ -125,7 +125,7 @@ Ext.define('FeaturesInProgress.PortfolioKanban', {
                             }
                         ],
                         context: this.context.getDataContext()
-                    },
+                    }
                 });
 
                 this.add(cardboard);

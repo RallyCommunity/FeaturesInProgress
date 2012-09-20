@@ -4,16 +4,16 @@ Ext.define('FeaturesInProgress.InMemoryColumn', {
     
     config: {
         enableRanking: false,
-    	/**
-    	 * @cfg {Array}
-    	 */
-    	data: []
+        /**
+         * @cfg {Array}
+         */
+        data: []
     },
 
     _queryForData: function(){
         Ext.defer(function(){
-        	this.createAndAddCards(this.features || []);
-        	this.fireEvent("load", this, this.features || []);
+            this.createAndAddCards(this.features || []);
+            this.fireEvent("load", this, this.features || []);
         }, 1, this);
     }
     

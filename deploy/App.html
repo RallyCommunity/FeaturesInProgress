@@ -116,16 +116,16 @@
                 
                 config: {
                     enableRanking: false,
-                	/**
-                	 * @cfg {Array}
-                	 */
-                	data: []
+                    /**
+                     * @cfg {Array}
+                     */
+                    data: []
                 },
             
                 _queryForData: function(){
                     Ext.defer(function(){
-                    	this.createAndAddCards(this.features || []);
-                    	this.fireEvent("load", this, this.features || []);
+                        this.createAndAddCards(this.features || []);
+                        this.fireEvent("load", this, this.features || []);
                     }, 1, this);
                 }
                 
@@ -289,7 +289,7 @@
                                         }
                                     ],
                                     context: this.context.getDataContext()
-                                },
+                                }
                             });
             
                             this.add(cardboard);
@@ -417,8 +417,6 @@
                     
                     var container = this.down('#boardContainer');
                     container.removeAll();
-                    
-                    container.setLoading(true);
             
                     this.findFeaturesForProject(this.getSelectedProject(), function(featureRefs){
                         featureRefs = Ext.Array.unique(featureRefs);
@@ -431,7 +429,6 @@
                                     features: features
                                 });
                                 container.add(cardboard);
-                                container.setLoading(false);
                                 this.fireEvent('doneLoading');
                             },
                             scope: this
@@ -482,9 +479,7 @@
             
                                 this.findFeaturesForUserStories(store, [], function(featureRefs){
                                     callback.call(scope, featureRefs);
-                                }, this);    
-                            } else {
-                                this.down('#boardContainer').setLoading(false);
+                                }, this);
                             }
                             
                         },
@@ -599,6 +594,7 @@
                     this.buildTitle();
                     this.buildCapabilityGroupDropdown();
                     this.buildLoadButton();
+                    this.buildLoadingText();
                     this.buildKanbanBoard();
                 },
             
@@ -616,6 +612,9 @@
                         cls: 'grayLabel',
                         html: 'The "In-Progress" Portfolio Items shown have child User Stories assigned to the selected Capability Group'
                     });
+                },
+            
+                buildLoadingText: function () {
             
                     this.add({
                         xtype: 'component',
@@ -695,10 +694,10 @@
         }
         
         .loadingText {
+            clear: both;
             text-align: center;
             width: 100%;
             font-size: 15px;
-            height: 10px;
         }
         
         h1 {
