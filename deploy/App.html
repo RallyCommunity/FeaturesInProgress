@@ -9,6 +9,7 @@
         Rally.onReady(function() {
             Ext.define('CapabilityGroupCombobox', {
             	extend: 'Rally.ui.combobox.ComboBox',
+                alias: 'widget.capabilitygroupcombobox',
             
                 constructor: function(config) {
                     var defaultConfig = {
@@ -19,6 +20,10 @@
                         storeConfig: {
                             autoLoad: true,
                             model: 'Project',
+                            sorters: {
+                                property: 'Name',
+                                direction: 'ASC'
+                            },
                             filters: [
                                 {
                                     property: 'Name',
