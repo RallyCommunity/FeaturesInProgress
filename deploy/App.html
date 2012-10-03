@@ -456,10 +456,17 @@
                         operator: '!=',
                         value: 'null'
                     });
+                                
+                    storyFilter = storyFilter.and({
+                        property: 'ScheduleState',
+                        operator: '<=',
+                        value: 'Accepted'
+                    });
                     
                     storyFilter = storyFilter.and({
                         property: 'ScheduleState',
-                        value: 'In-Progress'
+                        operator: '>=',
+                        value: 'Defined'
                     });
                     
                     var store = Ext.create('Rally.data.WsapiDataStore', {
@@ -609,7 +616,7 @@
                         autoEl: 'h1',
                         cls: 'titleText',
                         itemId: 'titleText',
-                        html: 'In Progress Features'
+                        html: 'MVFs by Capability Group'
                     });
             
                     this.add({

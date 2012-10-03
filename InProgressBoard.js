@@ -91,10 +91,17 @@ Ext.define('FeaturesInProgress.InProgressBoard', {
             operator: '!=',
             value: 'null'
         });
+                    
+        storyFilter = storyFilter.and({
+            property: 'ScheduleState',
+            operator: '<=',
+            value: 'Accepted'
+        });
         
         storyFilter = storyFilter.and({
             property: 'ScheduleState',
-            value: 'In-Progress'
+            operator: '>=',
+            value: 'Defined'
         });
         
         var store = Ext.create('Rally.data.WsapiDataStore', {

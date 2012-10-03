@@ -17,7 +17,7 @@ Ext.define('FeaturesInProgress', {
             autoEl: 'h1',
             cls: 'titleText',
             itemId: 'titleText',
-            html: 'In Progress Features'
+            html: 'MVFs by Capability Group'
         });
 
         this.add({
