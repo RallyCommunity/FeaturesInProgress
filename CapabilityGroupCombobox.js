@@ -3,6 +3,20 @@ Ext.define('CapabilityGroupCombobox', {
     alias: 'widget.capabilitygroupcombobox',
 
     constructor: function(config) {
+
+        var filters = Ext.create('Rally.data.QueryFilter', {
+            property: 'Name',
+            operator: 'Contains',
+            value: 'MVF Backlog'
+        });
+
+        filters = filters.or({
+            property: 'Name',
+            operator: 'Contains',
+            value: '@'
+        });
+
+
         var defaultConfig = {
             stateful: false,
             fieldLabel: 'Capability Group',
@@ -15,13 +29,7 @@ Ext.define('CapabilityGroupCombobox', {
                     property: 'Name',
                     direction: 'ASC'
                 },
-                filters: [
-                    {
-                        property: 'Name',
-                        operator: 'Contains',
-                        value: 'MVF Backlog'
-                    }
-                ]
+                filters: [filters]
             }
         };
 
