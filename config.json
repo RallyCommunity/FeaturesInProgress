@@ -1,7 +1,7 @@
 {
     "name": "FeaturesInProgress",
     "className": "FeaturesInProgress",
-    "sdk": "2.0p3",
+    "sdk": "2.0p5",
     "javascript": [
         "CapabilityGroupCombobox.js",
 		"ProjectTree.js",
