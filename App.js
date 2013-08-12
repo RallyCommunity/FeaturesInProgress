@@ -17,13 +17,13 @@ Ext.define('FeaturesInProgress', {
             autoEl: 'h1',
             cls: 'titleText',
             itemId: 'titleText',
-            html: 'MVFs by Capability Group'
+            html: 'Features by Capability Group'
         });
 
         this.add({
             xtype: 'component',
             cls: 'grayLabel',
-            html: 'The "In-Progress" Portfolio Items shown have child User Stories assigned to the selected Capability Group'
+            html: 'The "In-Progress" Portfolio Items shown have child User Stories assigned to the selected Capability Group that are not yet Accepted or Delivered'
         });
     },
 

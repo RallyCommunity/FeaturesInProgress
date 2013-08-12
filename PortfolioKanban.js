@@ -168,7 +168,7 @@ Ext.define('FeaturesInProgress.PortfolioKanban', {
                 
                 columns.push({
                     value: state.get('_ref'),
-                    displayValue: state.get('Name'),
+                    displayValue: state.get('Name') + "(" + features.length + ")",
                     features: features
                 });
             }, this);

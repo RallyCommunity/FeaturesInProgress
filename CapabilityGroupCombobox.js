@@ -25,6 +25,7 @@ Ext.define('CapabilityGroupCombobox', {
             storeConfig: {
                 autoLoad: true,
                 model: 'Project',
+                fetch: ['Name', '_ref', 'ObjectID'],
                 sorters: {
                     property: 'Name',
                     direction: 'ASC'
